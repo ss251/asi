@@ -202,6 +202,28 @@ def test_unique_names_preserve_config_and_seed_order() -> None:
             assert summary.std == pytest.approx(float(np.std(summary.values, ddof=1)))
 
 
+@pytest.mark.parametrize("parallel", [False, True])
+def test_experiment_import_error_is_not_retried_as_optional_dependency_fallback(
+    parallel: bool,
+) -> None:
+    factory_calls: list[int] = []
+
+    def failing_learner_factory() -> Never:
+        factory_calls.append(len(factory_calls) + 1)
+        raise ImportError("experiment dependency failed")
+
+    with pytest.raises(ImportError, match="experiment dependency failed"):
+        run_multi_seed_experiment(
+            [_config("import_failure", learner_factory=failing_learner_factory)],
+            seeds=[0],
+            parallel=parallel,
+            n_jobs=1,
+            show_progress=True,
+        )
+
+    assert factory_calls == [1]
+
+
 def test_seed_axis_surfaces_use_sample_standard_deviation() -> None:
     values = np.asarray([0.10, 0.12, 0.30], dtype=np.float64)
     aggregate = AggregatedResults(
