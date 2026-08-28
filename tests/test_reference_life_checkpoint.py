@@ -65,6 +65,13 @@ def test_checkpoint_validator_rejects_generation_and_zero_event_metric_forgery()
     with pytest.raises(ValueError, match="generation history"):
         runner.validate_checkpoint_state(impossible_generation)
 
+    impossible_extra_generation = dataclasses.replace(
+        state,
+        commit_generation=state.accepted_events + state.checkpoint_generation + 1,
+    )
+    with pytest.raises(ValueError, match="generation history"):
+        runner.validate_checkpoint_state(impossible_extra_generation)
+
     metrics = state.metrics
     nonzero_empty_phase = dataclasses.replace(
         metrics,

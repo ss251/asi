@@ -2044,8 +2044,10 @@ class ReferenceLifeRunner:
             raise DecisionOwnershipError("checkpoint state must precede life completion")
         if state.checkpoint_generation > state.commit_generation:
             raise DecisionOwnershipError("checkpoint generation exceeds commit generation")
-        if state.commit_generation < (state.accepted_events + state.checkpoint_generation):
-            raise DecisionOwnershipError("checkpoint generation history predates accepted events")
+        if state.commit_generation != (state.accepted_events + state.checkpoint_generation):
+            raise DecisionOwnershipError(
+                "checkpoint generation history is inconsistent with accepted events"
+            )
 
         self._reducer.validate_state(state.transaction_state)
         self._dispatch_adapter.validate_state(state.dispatch_state)
